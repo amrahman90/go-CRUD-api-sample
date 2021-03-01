@@ -29,6 +29,7 @@ require (
 	github.com/jinzhu/now v1.1.1 // indirect
 	github.com/json-iterator/go v1.1.10 // indirect
 	github.com/klauspost/compress v1.11.8 // indirect
+	github.com/labstack/echo/v4 v4.2.0 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/magiconair/properties v1.8.4 // indirect
 	github.com/mattn/go-isatty v0.0.12 // indirect

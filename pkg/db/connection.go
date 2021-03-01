@@ -52,12 +52,14 @@ type InitOpt struct {
 func NewConnection(opt InitOpt) (db *gorm.DB, err error) {
 	dsn := fmt.Sprintf(
 		"host=%s user=%s password=%s dbname=%s"+
-			"port=%s sslmode=%s TimeZone=%s",
+			" port=%s sslmode=%s TimeZone=%s",
 		opt.ConnectOpt.Host, opt.ConnectOpt.User, opt.ConnectOpt.Password,
 		opt.ConnectOpt.DbName, opt.ConnectOpt.Port, opt.ConnectOpt.SSLMode, opt.ConnectOpt.TimeZone,
 	)
 	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
-		Logger: GormZapLogger{},
+		Logger: GormZapLogger{
+			logger: opt.Logger,
+		},
 	})
 
 	return
@@ -73,9 +75,7 @@ type FoodItem struct {
 }
 
 func Init(opt InitOpt) (db *gorm.DB, err error) {
-	db, err = NewConnection(InitOpt{
-		Logger: opt.Logger,
-	})
+	db, err = NewConnection(opt)
 	if err != nil {
 		return
 	}

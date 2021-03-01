@@ -9,9 +9,10 @@ import (
 
 type Config struct {
 	Server struct {
-		Env  string
-		Host string
-		Port string
+		Env       string
+		Host      string
+		Port      string
+		Framework string
 	}
 
 	Db struct {
