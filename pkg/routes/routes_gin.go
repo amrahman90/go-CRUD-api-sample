@@ -6,6 +6,8 @@ import (
 
 	"github.com/amrahman90/go-CRUD-api-sample/pkg/config"
 	"github.com/amrahman90/go-CRUD-api-sample/pkg/services/fooditem"
+	"github.com/amrahman90/go-CRUD-api-sample/pkg/utils"
+	"go.uber.org/zap"
 
 	ginzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
@@ -22,7 +24,8 @@ func SetupGin(opt SetupOptGin) (app *gin.Engine, err error) {
 		return
 	}
 	fooditemService := fooditem.NewFoodItem(fooditem.FoodItemService{
-		DB: dbConn,
+		DB:     dbConn,
+		Logger: logger,
 	})
 
 	gin.SetMode(gin.ReleaseMode)
@@ -36,9 +39,13 @@ func SetupGin(opt SetupOptGin) (app *gin.Engine, err error) {
 	{
 		itemGroup := app.Group("item")
 		{
-			// item := new(controllers.UserController)
 			itemGroup.GET("/", func(c *gin.Context) {
-				result, err := fooditemService.GetAllItems()
+				opt := fooditem.GetAllItemsOpt{
+					Limit:  utils.StrToInt(c.DefaultQuery("limit", "10")),
+					Offset: utils.StrToInt(c.DefaultQuery("offset", "0")),
+				}
+
+				result, err := fooditemService.GetAllItems(&opt)
 				if err != nil {
 					sendInternalServerErrorGin(c, "some error occurred")
 					return
@@ -46,7 +53,14 @@ func SetupGin(opt SetupOptGin) (app *gin.Engine, err error) {
 				sendSuccessGin(c, "Success", result)
 			})
 			itemGroup.POST("/", func(c *gin.Context) {
-				err := fooditemService.AddItem()
+				opt := fooditem.FoodItem{}
+				err := c.ShouldBindJSON(&opt)
+				if err != nil {
+					logger.Error("AddItem", zap.Error(err))
+					sendInternalServerErrorGin(c, "some error occurred")
+					return
+				}
+				err = fooditemService.AddItem(opt)
 				if err != nil {
 					sendInternalServerErrorGin(c, "some error occurred")
 					return
@@ -54,7 +68,9 @@ func SetupGin(opt SetupOptGin) (app *gin.Engine, err error) {
 				sendSuccessGin(c, "Success", nil)
 			})
 			itemGroup.GET("/name/:name", func(c *gin.Context) {
-				result, err := fooditemService.GetItem()
+				result, err := fooditemService.GetItem(fooditem.GetItemOpt{
+					Name: c.Param("name"),
+				})
 				if err != nil {
 					sendInternalServerErrorGin(c, "some error occurred")
 					return
@@ -62,7 +78,9 @@ func SetupGin(opt SetupOptGin) (app *gin.Engine, err error) {
 				sendSuccessGin(c, "Success", result)
 			})
 			itemGroup.GET("/id/:id", func(c *gin.Context) {
-				result, err := fooditemService.GetItem()
+				result, err := fooditemService.GetItem(fooditem.GetItemOpt{
+					ID: utils.StrToInt(c.Param("id")),
+				})
 				if err != nil {
 					sendInternalServerErrorGin(c, "some error occurred")
 					return
@@ -70,15 +88,25 @@ func SetupGin(opt SetupOptGin) (app *gin.Engine, err error) {
 				sendSuccessGin(c, "Success", result)
 			})
 			itemGroup.PUT("/:id", func(c *gin.Context) {
-				err := fooditemService.UpdateItem()
+				item := fooditem.FoodItem{}
+				err := c.ShouldBindJSON(&item)
+				if err != nil {
+					logger.Error("AddItem", zap.Error(err))
+					sendInternalServerErrorGin(c, "some error occurred")
+					return
+				}
+				err = fooditemService.UpdateItem(fooditem.UpdateItemOpt{
+					ID:   utils.StrToInt(c.Param("id")),
+					Item: item,
+				})
 				if err != nil {
 					sendInternalServerErrorGin(c, "some error occurred")
 					return
 				}
 				sendSuccessGin(c, "Success", nil)
 			})
-			itemGroup.DELETE("/", func(c *gin.Context) {
-				err := fooditemService.UpdateItem()
+			itemGroup.DELETE("/:id", func(c *gin.Context) {
+				err := fooditemService.DeleteItem(utils.StrToInt(c.Param("id")))
 				if err != nil {
 					sendInternalServerErrorGin(c, "some error occurred")
 					return

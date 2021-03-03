@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
 	"go.uber.org/zap"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -67,11 +66,15 @@ func NewConnection(opt InitOpt) (db *gorm.DB, err error) {
 
 type FoodItem struct {
 	gorm.Model
-	ID uuid.UUID `gorm:"primaryKey;type:uuid;default:uuid_generate_v4()"`
-
+	ID           *int
+	Name         string   `json:",omitempty"`
+	Description  string   `json:",omitempty"`
+	Price        *float64 `json:",omitempty"`
+	RestaurantID *int     `json:",omitempty"`
+	// Restaurant   Restaurant
 	CreatedAt time.Time
 	UpdatedAt time.Time
-	DeletedAt gorm.DeletedAt `gorm:"index"`
+	DeletedAt *gorm.DeletedAt `json:",omitempty" gorm:"index"`
 }
 
 func Init(opt InitOpt) (db *gorm.DB, err error) {
